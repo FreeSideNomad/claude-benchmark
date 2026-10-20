@@ -1,0 +1,4 @@
+id: medium-02-add-csv-filter
+title: Implement filter_rows()
+difficulty: medium
+category: feature-add
