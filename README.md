@@ -37,26 +37,29 @@ auth config per account). The harness does not manage credentials or switch
 environments itself — you activate one, then run the harness once per
 environment, tagging it with whatever label you choose:
 
+Run both CLIs as modules (`-m harness.run`, not `python harness/run.py`) so the
+`harness` package resolves correctly from the repo root:
+
 ```bash
 # in a shell already configured for one environment:
-uv run python harness/run.py --env personal-sub
+uv run python -m harness.run --env personal-sub
 
 # repeat once per environment, in that environment's own shell:
-uv run python harness/run.py --env personal-api
-uv run python harness/run.py --env work-sub
-uv run python harness/run.py --env work-api
+uv run python -m harness.run --env personal-api
+uv run python -m harness.run --env work-sub
+uv run python -m harness.run --env work-api
 ```
 
 Smoke-test a single fixture cheaply before a full run:
 
 ```bash
-uv run python harness/run.py --env smoke-test --task easy-01-fix-average --repeats 1
+uv run python -m harness.run --env smoke-test --task easy-01-fix-average --repeats 1
 ```
 
 Generate the comparison report once some `results/*.jsonl` files exist:
 
 ```bash
-uv run python harness/report.py
+uv run python -m harness.report
 ```
 
 This prints a markdown table to stdout and writes `reports/dashboard.html`.

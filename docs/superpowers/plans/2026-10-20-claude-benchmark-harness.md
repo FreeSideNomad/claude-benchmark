@@ -2757,7 +2757,7 @@ Expected: `12`
 
 Run:
 ```bash
-uv run python harness/run.py --env smoke-test --task easy-01-fix-average --repeats 1
+uv run python -m harness.run --env smoke-test --task easy-01-fix-average --repeats 1
 ```
 Expected: prints `[smoke-test] easy-01-fix-average repeat 1/1...` followed by `-> pass=True cost=$0.0XXX` (pass should be `True` if Claude Code correctly fixes the bug; investigate `results/smoke-test.jsonl`'s row if not). This single call also validates: `uv venv`/`uv pip install` work from Python's `subprocess`, `claude -p ... --output-format json` parses correctly end-to-end, and the hidden-test overlay + scoring works.
 
@@ -2768,7 +2768,7 @@ Expected: one JSON line with all the fields from the Task 6 schema populated (no
 
 - [ ] **Step 4: Generate the report from just the smoke-test data and confirm it renders**
 
-Run: `uv run python harness/report.py`
+Run: `uv run python -m harness.report`
 Expected: a markdown table printed to stdout containing `easy-01-fix-average`, and `reports/dashboard.html` written and openable in a browser.
 
 - [ ] **Step 5: Remove the smoke-test results so they don't pollute the real comparison**
@@ -2781,14 +2781,14 @@ rm results/smoke-test.jsonl
 
 In each of the 4 already-configured shells (per `.zshrc`), run:
 ```bash
-uv run python harness/run.py --env personal-sub
-uv run python harness/run.py --env personal-api
-uv run python harness/run.py --env work-sub
-uv run python harness/run.py --env work-api
+uv run python -m harness.run --env personal-sub
+uv run python -m harness.run --env personal-api
+uv run python -m harness.run --env work-sub
+uv run python -m harness.run --env work-api
 ```
 Each is 12 tasks x 3 repeats = 36 Claude Code invocations. Then from any one checkout with all 4 `results/*.jsonl` files present (copy them over if the environments ran on different machines):
 ```bash
-uv run python harness/report.py
+uv run python -m harness.report
 ```
 Expected: a comparison table covering all 4 environments, and `reports/dashboard.html` reflecting the full run. Review the "Warnings" section for any model/version drift before drawing conclusions from the cost/performance comparison.
 
