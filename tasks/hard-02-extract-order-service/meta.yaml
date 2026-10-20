@@ -1,0 +1,4 @@
+id: hard-02-extract-order-service
+title: Separate validation/stock/recording concerns across two files
+difficulty: hard
+category: refactor
