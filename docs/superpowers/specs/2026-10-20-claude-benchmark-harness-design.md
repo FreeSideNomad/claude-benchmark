@@ -44,7 +44,7 @@ claude-benchmark/
     run.py              # orchestrator
     report.py           # aggregator + HTML dashboard generator
     lib/
-      worktree.py        # create/destroy a disposable git worktree per run
+      worktree.py        # create/destroy a disposable per-run working directory
       claude_runner.py    # invoke `claude` non-interactively, parse JSON result
       scorer.py           # overlay hidden tests, run pytest, return pass/fail
   results/
@@ -69,16 +69,22 @@ per task are fixed at 3, not a CLI option (see rationale below).
 
 For each task × repeat:
 
-1. Create a fresh git worktree, copy the task's `seed/` into it as the initial commit.
-2. `uv venv` inside the worktree, then `uv pip install pytest -r requirements.txt`
+1. Create a fresh disposable working directory and copy the task's `seed/` files
+   into it (plain file copy, not a literal `git worktree add` — `seed/` is tracked
+   as ordinary files in this project's own repo; giving it its own nested `.git`
+   so a real git worktree could be added from it would make the outer repo see it
+   as a broken gitlink/submodule instead of real file contents, so task fixtures
+   would come up empty on a fresh clone. A plain copy gives the same isolation
+   speed without that trap).
+2. `uv venv` inside the working directory, then `uv pip install pytest -r requirements.txt`
    (pytest is always installed by the harness itself — task authors only list their
    own code's dependencies).
 3. Run:
    ```
    claude -p "$(cat prompt.md)" --output-format json --permission-mode acceptEdits
    ```
-   with cwd set to the worktree, so Claude Code can edit/run files freely without
-   interactive permission prompts (safe because the worktree is disposable).
+   with cwd set to the working directory, so Claude Code can edit/run files freely
+   without interactive permission prompts (safe because the directory is disposable).
 4. Parse the JSON result (verified against real `claude -p ... --output-format json`
    output on Claude Code 2.1.233): `total_cost_usd`, `usage.input_tokens`,
    `usage.output_tokens`, `usage.cache_creation_input_tokens`,
@@ -86,10 +92,10 @@ For each task × repeat:
    model name(s) from the `modelUsage` object's keys (joined with `,` in the rare
    case more than one model was used in a session). Separately capture
    `claude --version`.
-5. Copy `tests/` into the worktree (overlaying, not visible beforehand) and run
+5. Copy `tests/` into the working directory (overlaying, not visible beforehand) and run
    `pytest -q`; exit code 0 ⇒ pass.
 6. Append one JSON row to `results/<env>.jsonl` (schema below).
-7. Delete the `uv`-managed venv and remove the git worktree.
+7. Delete the `uv`-managed venv and remove the working directory.
 
 A run is always 3 repeats per task per environment (fixed, not configurable down),
 to produce a pass-rate spread and a cost/duration spread per task rather than a
