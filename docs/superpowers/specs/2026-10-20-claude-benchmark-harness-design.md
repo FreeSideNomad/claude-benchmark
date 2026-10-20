@@ -79,8 +79,13 @@ For each task × repeat:
    ```
    with cwd set to the worktree, so Claude Code can edit/run files freely without
    interactive permission prompts (safe because the worktree is disposable).
-4. Parse the JSON result for: `cost_usd`, input/output/cache token counts,
-   `duration_ms`, `num_turns`, and `model`. Separately capture `claude --version`.
+4. Parse the JSON result (verified against real `claude -p ... --output-format json`
+   output on Claude Code 2.1.233): `total_cost_usd`, `usage.input_tokens`,
+   `usage.output_tokens`, `usage.cache_creation_input_tokens`,
+   `usage.cache_read_input_tokens`, `duration_ms`, `num_turns`, `is_error`, and the
+   model name(s) from the `modelUsage` object's keys (joined with `,` in the rare
+   case more than one model was used in a session). Separately capture
+   `claude --version`.
 5. Copy `tests/` into the worktree (overlaying, not visible beforehand) and run
    `pytest -q`; exit code 0 ⇒ pass.
 6. Append one JSON row to `results/<env>.jsonl` (schema below).
@@ -100,17 +105,26 @@ agent-side variance.
   "task_id": "medium-03-refactor-cache",
   "repeat": 2,
   "pass": true,
-  "cost_usd": 0.0421,
+  "is_error": false,
+  "total_cost_usd": 0.0421,
   "input_tokens": 18234,
   "output_tokens": 912,
-  "cache_read_tokens": 15000,
+  "cache_creation_input_tokens": 4000,
+  "cache_read_input_tokens": 15000,
   "duration_ms": 48213,
   "num_turns": 6,
   "model": "claude-opus-5",
-  "claude_code_version": "2.x.x",
+  "claude_code_version": "2.1.233",
   "timestamp": "2026-10-20T14:03:11Z"
 }
 ```
+
+Field provenance: everything except `env`, `task_id`, `repeat`, `pass`,
+`claude_code_version`, and `timestamp` is read directly from the JSON object
+`claude -p ... --output-format json` prints on stdout — `total_cost_usd`,
+`duration_ms`, `num_turns`, `is_error` are top-level; the four token counts come
+from the `usage` object; `model` is the (possibly joined) set of keys in the
+`modelUsage` object.
 
 ## 5. Reporting
 
