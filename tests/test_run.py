@@ -103,7 +103,8 @@ def test_execute_task_repeat_safe_converts_exception_to_error_row(tmp_path):
          patch("harness.run.claude_runner.run_claude", side_effect=RuntimeError("boom")):
         row = execute_task_repeat_safe(task_dir, env="personal-sub", repeat=1)
 
-    assert row["is_error"] is True
+    assert row["harness_error"] is True
+    assert row["is_error"] is None
     assert row["pass"] is False
     assert row["error"] == "boom"
     assert row["env"] == "personal-sub"

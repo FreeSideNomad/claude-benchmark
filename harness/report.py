@@ -19,23 +19,23 @@ def _fmt_num(v):
 
 def render_markdown_table(summary: dict) -> str:
     lines = [
-        "| env | task_id | pass_rate | median_cost_usd | median_duration_ms | median_total_tokens |",
-        "| --- | --- | --- | --- | --- | --- |",
+        "| env | task_id | pass_rate | errors | median_cost_usd | median_duration_ms | median_total_tokens |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for e in summary["entries"]:
         lines.append(
-            f"| {e['env']} | {e['task_id']} | {e['passes']}/{e['runs']} "
+            f"| {e['env']} | {e['task_id']} | {e['passes']}/{e['runs']} | {e['errors']} "
             f"| {_fmt_cost(e['median_cost_usd'])} | {_fmt_num(e['median_duration_ms'])} | {_fmt_num(e['median_total_tokens'])} |"
         )
 
     lines.append("")
     lines.append("## Overall per-environment rollup")
     lines.append("")
-    lines.append("| env | pass_rate | median_cost_usd | median_duration_ms | median_total_tokens |")
-    lines.append("| --- | --- | --- | --- | --- |")
+    lines.append("| env | pass_rate | errors | median_cost_usd | median_duration_ms | median_total_tokens |")
+    lines.append("| --- | --- | --- | --- | --- | --- |")
     for r in summary["rollup"]:
         lines.append(
-            f"| {r['env']} | {r['passes']}/{r['runs']} "
+            f"| {r['env']} | {r['passes']}/{r['runs']} | {r['errors']} "
             f"| {_fmt_cost(r['median_cost_usd'])} | {_fmt_num(r['median_duration_ms'])} | {_fmt_num(r['median_total_tokens'])} |"
         )
 
@@ -51,6 +51,7 @@ def render_html_dashboard(summary: dict) -> str:
     rows_html = "\n".join(
         f"<tr><td>{html.escape(e['env'])}</td><td>{html.escape(e['task_id'])}</td>"
         f"<td>{e['passes']}/{e['runs']}</td>"
+        f"<td>{e['errors']}</td>"
         f"<td>{_fmt_cost(e['median_cost_usd'])}</td>"
         f"<td>{_fmt_num(e['median_duration_ms'])}</td>"
         f"<td>{_fmt_num(e['median_total_tokens'])}</td></tr>"
@@ -59,6 +60,7 @@ def render_html_dashboard(summary: dict) -> str:
     rollup_rows_html = "\n".join(
         f"<tr><td>{html.escape(r['env'])}</td>"
         f"<td>{r['passes']}/{r['runs']}</td>"
+        f"<td>{r['errors']}</td>"
         f"<td>{_fmt_cost(r['median_cost_usd'])}</td>"
         f"<td>{_fmt_num(r['median_duration_ms'])}</td>"
         f"<td>{_fmt_num(r['median_total_tokens'])}</td></tr>"
@@ -80,12 +82,12 @@ td, th {{ border: 1px solid #ccc; padding: 4px 8px; }}
 <body>
 <h1>Claude benchmark results</h1>
 <table>
-<tr><th>env</th><th>task_id</th><th>pass rate</th><th>median cost (USD)</th><th>median duration (ms)</th><th>median tokens</th></tr>
+<tr><th>env</th><th>task_id</th><th>pass rate</th><th>errors</th><th>median cost (USD)</th><th>median duration (ms)</th><th>median tokens</th></tr>
 {rows_html}
 </table>
 <h2>Overall per-environment rollup</h2>
 <table>
-<tr><th>env</th><th>pass rate</th><th>median cost (USD)</th><th>median duration (ms)</th><th>median tokens</th></tr>
+<tr><th>env</th><th>pass rate</th><th>errors</th><th>median cost (USD)</th><th>median duration (ms)</th><th>median tokens</th></tr>
 {rollup_rows_html}
 </table>
 {warnings_section}

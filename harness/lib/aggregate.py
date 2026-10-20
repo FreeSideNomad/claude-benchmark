@@ -24,7 +24,8 @@ def summarize(rows: list[dict]) -> dict:
     entries = []
     for (env, task_id), group in sorted(by_env_task.items()):
         passes = sum(1 for r in group if r["pass"])
-        ok_rows = [r for r in group if not r.get("is_error")]
+        ok_rows = [r for r in group if not r.get("harness_error")]
+        errors = sum(1 for r in group if r.get("harness_error"))
         costs = [r["total_cost_usd"] for r in ok_rows]
         durations = [r["duration_ms"] for r in ok_rows]
         tokens = [r["input_tokens"] + r["output_tokens"] for r in ok_rows]
@@ -34,6 +35,7 @@ def summarize(rows: list[dict]) -> dict:
                 "task_id": task_id,
                 "runs": len(group),
                 "passes": passes,
+                "errors": errors,
                 "pass_rate": passes / len(group),
                 "median_cost_usd": statistics.median(costs) if costs else None,
                 "median_duration_ms": statistics.median(durations) if durations else None,
@@ -43,6 +45,8 @@ def summarize(rows: list[dict]) -> dict:
 
     by_task_env: dict[tuple[str, str], dict[str, set]] = {}
     for row in rows:
+        if row.get("harness_error"):
+            continue
         key = (row["task_id"], row["env"])
         bucket = by_task_env.setdefault(key, {"models": set(), "versions": set()})
         bucket["models"].add(row["model"])
@@ -73,7 +77,8 @@ def summarize(rows: list[dict]) -> dict:
     rollup = []
     for env, env_rows in sorted(by_env.items()):
         passes = sum(1 for r in env_rows if r["pass"])
-        ok_rows = [r for r in env_rows if not r.get("is_error")]
+        ok_rows = [r for r in env_rows if not r.get("harness_error")]
+        errors = sum(1 for r in env_rows if r.get("harness_error"))
         costs = [r["total_cost_usd"] for r in ok_rows]
         durations = [r["duration_ms"] for r in ok_rows]
         tokens = [r["input_tokens"] + r["output_tokens"] for r in ok_rows]
@@ -82,6 +87,7 @@ def summarize(rows: list[dict]) -> dict:
                 "env": env,
                 "runs": len(env_rows),
                 "passes": passes,
+                "errors": errors,
                 "pass_rate": passes / len(env_rows),
                 "median_cost_usd": statistics.median(costs) if costs else None,
                 "median_duration_ms": statistics.median(durations) if durations else None,

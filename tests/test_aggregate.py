@@ -83,6 +83,26 @@ def test_summarize_does_not_flag_drift_for_intra_environment_model_variance():
     assert summary["warnings"] == []
 
 
+def test_summarize_tolerates_harness_error_rows_without_crashing():
+    rows = [
+        _row(env="personal-sub", task_id="easy-01", model="claude-sonnet-5"),
+        _row(env="personal-sub", task_id="easy-01", repeat=2, **{
+            "pass": False, "is_error": None, "harness_error": True, "error": "timeout",
+            "model": None, "claude_code_version": None,
+            "total_cost_usd": None, "duration_ms": None, "num_turns": None,
+            "input_tokens": None, "output_tokens": None,
+            "cache_creation_input_tokens": None, "cache_read_input_tokens": None,
+        }),
+        _row(env="work-api", task_id="easy-01", model="claude-sonnet-5"),
+    ]
+    summary = summarize(rows)  # must not raise
+
+    assert summary["warnings"] == []
+    entry = next(e for e in summary["entries"] if e["env"] == "personal-sub")
+    assert entry["errors"] == 1
+    assert entry["runs"] == 2
+
+
 def test_summarize_computes_overall_rollup_per_environment():
     rows = [
         _row(env="personal-sub", task_id="easy-01", repeat=1, total_cost_usd=0.01, duration_ms=1000, **{"pass": True}),

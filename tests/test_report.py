@@ -22,8 +22,33 @@ SAMPLE_ROW = {
 }
 
 
+HARNESS_ERROR_ROW = {
+    "env": "personal-sub",
+    "task_id": "easy-01",
+    "repeat": 2,
+    "pass": False,
+    "is_error": None,
+    "harness_error": True,
+    "error": "timeout",
+    "total_cost_usd": None,
+    "input_tokens": None,
+    "output_tokens": None,
+    "cache_creation_input_tokens": None,
+    "cache_read_input_tokens": None,
+    "duration_ms": None,
+    "num_turns": None,
+    "model": None,
+    "claude_code_version": None,
+    "timestamp": "2026-10-20T00:00:01Z",
+}
+
+
 def _sample_summary():
     return summarize([SAMPLE_ROW])
+
+
+def _sample_summary_with_error():
+    return summarize([SAMPLE_ROW, HARNESS_ERROR_ROW])
 
 
 def test_render_markdown_table_includes_task_row():
@@ -33,6 +58,15 @@ def test_render_markdown_table_includes_task_row():
     assert "Overall per-environment rollup" in table
 
 
+def test_render_markdown_table_includes_error_count():
+    table = render_markdown_table(_sample_summary_with_error())
+    assert "errors" in table
+    entry = _sample_summary_with_error()["entries"][0]
+    assert entry["errors"] == 1
+    rollup = _sample_summary_with_error()["rollup"][0]
+    assert rollup["errors"] == 1
+
+
 def test_render_html_dashboard_is_self_contained_and_includes_data():
     html = render_html_dashboard(_sample_summary())
     assert "<html>" in html
@@ -40,6 +74,12 @@ def test_render_html_dashboard_is_self_contained_and_includes_data():
     assert "http://" not in html
     assert "https://" not in html
     assert "rollup" in html.lower()
+
+
+def test_render_html_dashboard_includes_error_count():
+    rendered = render_html_dashboard(_sample_summary_with_error())
+    assert "errors" in rendered.lower()
+    assert "<td>1</td>" in rendered
 
 
 def test_render_html_dashboard_omits_warnings_section_when_empty():

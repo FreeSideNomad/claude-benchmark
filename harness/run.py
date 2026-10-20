@@ -51,7 +51,8 @@ def _error_row(task_dir: Path, env: str, repeat: int, error: Exception) -> dict:
         "task_id": task_dir.name,
         "repeat": repeat,
         "pass": False,
-        "is_error": True,
+        "is_error": None,
+        "harness_error": True,
         "error": str(error),
         "total_cost_usd": None,
         "duration_ms": None,
@@ -82,8 +83,14 @@ def run(env: str, task_filter: str | None = None, repeats: int = REPEATS) -> Non
         with open(results_path) as f:
             for line in f:
                 line = line.strip()
-                if line:
+                if not line:
+                    continue
+                try:
                     existing = json.loads(line)
+                except json.JSONDecodeError:
+                    print(f"[{env}] warning: skipping unparseable line in {results_path}")
+                    continue
+                if not existing.get("harness_error"):
                     already_done.add((existing["task_id"], existing["repeat"]))
 
     tasks = discover_tasks(TASKS_DIR)
@@ -101,7 +108,7 @@ def run(env: str, task_filter: str | None = None, repeats: int = REPEATS) -> Non
             row = execute_task_repeat_safe(task_dir, env, repeat)
             with open(results_path, "a") as f:
                 f.write(json.dumps(row) + "\n")
-            if row.get("is_error"):
+            if row.get("harness_error"):
                 print(f"  -> ERROR: {row['error']}")
             else:
                 print(f"  -> pass={row['pass']} cost=${row['total_cost_usd']:.4f}")
