@@ -12,10 +12,10 @@ def test_empty_list():
 
 
 def test_runs_fast_on_large_input():
-    items = list(range(20000)) + list(range(10000))
+    items = list(range(40000)) + list(range(20000))
     start = time.perf_counter()
     result = unique_preserve_order(items)
     elapsed = time.perf_counter() - start
 
-    assert result == list(range(20000))
+    assert result == list(range(40000))
     assert elapsed < 2.0

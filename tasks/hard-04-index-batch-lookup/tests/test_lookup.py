@@ -31,12 +31,12 @@ def test_does_not_mutate_inputs():
 
 
 def test_runs_fast_on_large_input():
-    prices = [{"item": f"item-{i}", "price": i} for i in range(5000)]
-    orders = [{"item": f"item-{i % 5000}"} for i in range(5000)]
+    prices = [{"item": f"item-{i}", "price": i} for i in range(25000)]
+    orders = [{"item": f"item-{i % 25000}"} for i in range(25000)]
     start = time.perf_counter()
     result = annotate_with_prices(orders, prices)
     elapsed = time.perf_counter() - start
 
-    assert len(result) == 5000
+    assert len(result) == 25000
     assert result[0]["price"] == 0
     assert elapsed < 2.0
