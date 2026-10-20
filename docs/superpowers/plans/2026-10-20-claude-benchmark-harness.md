@@ -2552,7 +2552,7 @@ cp -r tests seed/tests
 cd seed
 PYTHONPATH=. .check-venv/bin/pytest tests -q
 ```
-Expected: `4 failed, 1 passed` (`test_get_missing_key_returns_none` can only pass if the stub is changed to not raise on a cold `get`; expect most/all to FAIL with `NotImplementedError` since both methods raise unconditionally)
+Expected: `5 failed` (every test calls `get`/`put`, and both unconditionally raise `NotImplementedError` in the stub — nothing can pass until implemented)
 
 - [ ] **Step 3: Apply the reference fix temporarily and verify all tests PASS**
 
