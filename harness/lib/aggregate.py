@@ -24,6 +24,10 @@ def summarize(rows: list[dict]) -> dict:
     entries = []
     for (env, task_id), group in sorted(by_env_task.items()):
         passes = sum(1 for r in group if r["pass"])
+        ok_rows = [r for r in group if not r.get("is_error")]
+        costs = [r["total_cost_usd"] for r in ok_rows]
+        durations = [r["duration_ms"] for r in ok_rows]
+        tokens = [r["input_tokens"] + r["output_tokens"] for r in ok_rows]
         entries.append(
             {
                 "env": env,
@@ -31,27 +35,58 @@ def summarize(rows: list[dict]) -> dict:
                 "runs": len(group),
                 "passes": passes,
                 "pass_rate": passes / len(group),
-                "median_cost_usd": statistics.median(r["total_cost_usd"] for r in group),
-                "median_duration_ms": statistics.median(r["duration_ms"] for r in group),
-                "median_total_tokens": statistics.median(
-                    r["input_tokens"] + r["output_tokens"] for r in group
-                ),
+                "median_cost_usd": statistics.median(costs) if costs else None,
+                "median_duration_ms": statistics.median(durations) if durations else None,
+                "median_total_tokens": statistics.median(tokens) if tokens else None,
             }
         )
 
-    by_task: dict[str, list[dict]] = {}
+    by_task_env: dict[tuple[str, str], dict[str, set]] = {}
     for row in rows:
-        by_task.setdefault(row["task_id"], []).append(row)
+        key = (row["task_id"], row["env"])
+        bucket = by_task_env.setdefault(key, {"models": set(), "versions": set()})
+        bucket["models"].add(row["model"])
+        bucket["versions"].add(row["claude_code_version"])
+
+    by_task: dict[str, dict[str, dict]] = {}
+    for (task_id, env), bucket in by_task_env.items():
+        by_task.setdefault(task_id, {})[env] = bucket
 
     warnings = []
-    for task_id, task_rows in sorted(by_task.items()):
-        models = {r["model"] for r in task_rows}
-        versions = {r["claude_code_version"] for r in task_rows}
-        if len(models) > 1:
-            warnings.append(f"{task_id}: multiple models observed across environments: {sorted(models)}")
-        if len(versions) > 1:
-            warnings.append(
-                f"{task_id}: multiple claude_code_version values observed across environments: {sorted(versions)}"
-            )
+    for task_id in sorted(by_task):
+        env_buckets = by_task[task_id]
+        model_sets_by_env = {env: b["models"] for env, b in env_buckets.items()}
+        version_sets_by_env = {env: b["versions"] for env, b in env_buckets.items()}
 
-    return {"entries": entries, "warnings": warnings}
+        if len({frozenset(s) for s in model_sets_by_env.values()}) > 1:
+            detail = ", ".join(f"{env}={sorted(models)}" for env, models in sorted(model_sets_by_env.items()))
+            warnings.append(f"{task_id}: multiple models observed across environments: {detail}")
+
+        if len({frozenset(s) for s in version_sets_by_env.values()}) > 1:
+            detail = ", ".join(f"{env}={sorted(versions)}" for env, versions in sorted(version_sets_by_env.items()))
+            warnings.append(f"{task_id}: claude_code_version differs across environments: {detail}")
+
+    by_env: dict[str, list[dict]] = {}
+    for row in rows:
+        by_env.setdefault(row["env"], []).append(row)
+
+    rollup = []
+    for env, env_rows in sorted(by_env.items()):
+        passes = sum(1 for r in env_rows if r["pass"])
+        ok_rows = [r for r in env_rows if not r.get("is_error")]
+        costs = [r["total_cost_usd"] for r in ok_rows]
+        durations = [r["duration_ms"] for r in ok_rows]
+        tokens = [r["input_tokens"] + r["output_tokens"] for r in ok_rows]
+        rollup.append(
+            {
+                "env": env,
+                "runs": len(env_rows),
+                "passes": passes,
+                "pass_rate": passes / len(env_rows),
+                "median_cost_usd": statistics.median(costs) if costs else None,
+                "median_duration_ms": statistics.median(durations) if durations else None,
+                "median_total_tokens": statistics.median(tokens) if tokens else None,
+            }
+        )
+
+    return {"entries": entries, "warnings": warnings, "rollup": rollup}

@@ -72,3 +72,25 @@ def test_summarize_flags_version_drift_across_environments():
     summary = summarize(rows)
 
     assert any("claude_code_version" in w for w in summary["warnings"])
+
+
+def test_summarize_does_not_flag_drift_for_intra_environment_model_variance():
+    rows = [
+        _row(env="personal-sub", repeat=1, model="claude-sonnet-5"),
+        _row(env="personal-sub", repeat=2, model="claude-haiku-4-5,claude-sonnet-5"),
+    ]
+    summary = summarize(rows)
+    assert summary["warnings"] == []
+
+
+def test_summarize_computes_overall_rollup_per_environment():
+    rows = [
+        _row(env="personal-sub", task_id="easy-01", repeat=1, total_cost_usd=0.01, duration_ms=1000, **{"pass": True}),
+        _row(env="personal-sub", task_id="medium-01", repeat=1, total_cost_usd=0.03, duration_ms=3000, **{"pass": False}),
+    ]
+    summary = summarize(rows)
+    assert len(summary["rollup"]) == 1
+    rollup = summary["rollup"][0]
+    assert rollup["env"] == "personal-sub"
+    assert rollup["runs"] == 2
+    assert rollup["passes"] == 1

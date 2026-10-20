@@ -2,7 +2,7 @@ import json
 import subprocess
 from unittest.mock import patch
 
-from harness.lib.claude_runner import get_claude_version, run_claude
+from harness.lib.claude_runner import VERSION_TIMEOUT_SECONDS, get_claude_version, run_claude
 
 SAMPLE_RESULT_JSON = json.dumps(
     {
@@ -39,7 +39,13 @@ def test_get_claude_version_strips_output():
         version = get_claude_version()
 
     assert version == "2.1.233 (Claude Code)"
-    mock_run.assert_called_once_with(["claude", "--version"], capture_output=True, text=True, check=True)
+    mock_run.assert_called_once_with(
+        ["claude", "--version"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=VERSION_TIMEOUT_SECONDS,
+    )
 
 
 def test_run_claude_normalizes_fields(tmp_path):

@@ -5,8 +5,14 @@ import subprocess
 from pathlib import Path
 
 
+VERSION_TIMEOUT_SECONDS = 30
+CLAUDE_TIMEOUT_SECONDS = 600
+
+
 def get_claude_version() -> str:
-    result = subprocess.run(["claude", "--version"], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        ["claude", "--version"], capture_output=True, text=True, check=True, timeout=VERSION_TIMEOUT_SECONDS
+    )
     return result.stdout.strip()
 
 
@@ -26,6 +32,7 @@ def run_claude(prompt: str, cwd: Path) -> dict:
         capture_output=True,
         text=True,
         check=True,
+        timeout=CLAUDE_TIMEOUT_SECONDS,
     )
     raw = json.loads(result.stdout)
     usage = raw["usage"]

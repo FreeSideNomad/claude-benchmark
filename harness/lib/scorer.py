@@ -19,7 +19,7 @@ def run_pytest(work_dir: Path) -> bool:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(work_dir)
     result = subprocess.run(
-        ["uv", "run", "pytest", "tests", "-q"],
+        ["uv", "run", "--no-project", "pytest", "tests", "-q"],
         cwd=work_dir,
         env=env,
         capture_output=True,

@@ -30,6 +30,7 @@ def test_render_markdown_table_includes_task_row():
     table = render_markdown_table(_sample_summary())
     assert "easy-01" in table
     assert "1/1" in table
+    assert "Overall per-environment rollup" in table
 
 
 def test_render_html_dashboard_is_self_contained_and_includes_data():
@@ -38,6 +39,13 @@ def test_render_html_dashboard_is_self_contained_and_includes_data():
     assert "easy-01" in html
     assert "http://" not in html
     assert "https://" not in html
+    assert "rollup" in html.lower()
+
+
+def test_render_html_dashboard_omits_warnings_section_when_empty():
+    summary = _sample_summary()
+    assert summary["warnings"] == []
+    assert "<h2>Warnings</h2>" not in render_html_dashboard(summary)
 
 
 def test_main_writes_dashboard_file_and_prints_table(tmp_path, capsys):

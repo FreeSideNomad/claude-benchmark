@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 reports/dashboard.html
+.pytest_cache/
