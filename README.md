@@ -37,8 +37,18 @@ auth config per account). The harness does not manage credentials or switch
 environments itself — you activate one, then run the harness once per
 environment, tagging it with whatever label you choose:
 
-Run both CLIs as modules (`-m harness.run`, not `python harness/run.py`) so the
-`harness` package resolves correctly from the repo root:
+A `Makefile` wraps the commands below:
+
+```bash
+make run ENV=personal-sub      # full 12-task x 3-repeat run against one environment
+make smoke ENV=personal-sub TASK=easy-01-fix-average   # one task, one repeat
+make report                    # aggregate results/*.jsonl
+make test                      # the harness's own test suite
+```
+
+Equivalent raw commands (run both CLIs as modules — `-m harness.run`, not
+`python harness/run.py` — so the `harness` package resolves correctly from
+the repo root):
 
 ```bash
 # in a shell already configured for one environment:
@@ -67,7 +77,7 @@ This prints a markdown table to stdout and writes `reports/dashboard.html`.
 ## Development
 
 ```bash
-uv run pytest -q
+make test
 ```
 
 Design spec and implementation plan live under `docs/superpowers/`.
