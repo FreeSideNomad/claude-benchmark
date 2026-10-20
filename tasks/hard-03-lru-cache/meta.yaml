@@ -1,0 +1,4 @@
+id: hard-03-lru-cache
+title: Implement a fixed-capacity LRU cache
+difficulty: hard
+category: algorithm
