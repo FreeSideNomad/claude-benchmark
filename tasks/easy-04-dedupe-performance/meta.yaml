@@ -1,0 +1,4 @@
+id: easy-04-dedupe-performance
+title: Speed up O(n^2) duplicate removal
+difficulty: easy
+category: perf-optimization
