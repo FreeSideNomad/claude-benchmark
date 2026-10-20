@@ -2193,7 +2193,7 @@ cp -r tests seed/tests
 cd seed
 PYTHONPATH=. .check-venv/bin/pytest tests -q
 ```
-Expected: `1 failed, 2 passed` (`test_allows_up_to_capacity_then_denies` fails because the stub never denies)
+Expected: `2 failed, 1 passed` (`test_allows_up_to_capacity_then_denies` and `test_refills_over_time` both fail because the stub never denies; `test_refill_is_capped_at_capacity`'s three assertions are all `True` so it passes trivially against the stub)
 
 - [ ] **Step 3: Apply the reference fix temporarily and verify all tests PASS**
 
