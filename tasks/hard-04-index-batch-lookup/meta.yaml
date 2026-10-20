@@ -1,0 +1,4 @@
+id: hard-04-index-batch-lookup
+title: Replace O(n*m) price lookup with an index
+difficulty: hard
+category: perf-optimization
