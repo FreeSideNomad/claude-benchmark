@@ -49,13 +49,19 @@ def test_execute_task_repeat_wires_lib_calls_and_returns_row(tmp_path):
          patch("harness.run.scorer.score_task", return_value=True) as mock_score:
         row = execute_task_repeat(task_dir, env="personal-sub", repeat=1)
 
-    assert mock_create.called
-    assert mock_venv.called
-    assert mock_install.called
-    assert mock_version.called
+    # Capture work_dir from the first mock call to establish internal consistency
+    work_dir = mock_create.call_args.args[1]
+
+    # Assert all lib calls received correct arguments
+    mock_create.assert_called_once_with(task_dir / "seed", work_dir)
+    mock_venv.assert_called_once_with(work_dir)
+    mock_install.assert_called_once_with(work_dir, task_dir / "requirements.txt")
+    mock_version.assert_called_once()
     assert mock_run_claude.call_args.args[0] == "fix the bug"
-    assert mock_score.called
-    assert mock_remove.called
+    mock_score.assert_called_once_with(task_dir, work_dir)
+    mock_remove.assert_called_once_with(work_dir.parent)
+
+    # Assert row contents
     assert row["env"] == "personal-sub"
     assert row["task_id"] == "easy-01"
     assert row["repeat"] == 1
@@ -68,7 +74,7 @@ def test_execute_task_repeat_wires_lib_calls_and_returns_row(tmp_path):
 def test_execute_task_repeat_removes_worktree_even_if_scoring_fails(tmp_path):
     task_dir = _make_task_dir(tmp_path)
 
-    with patch("harness.run.worktree.create_worktree"), \
+    with patch("harness.run.worktree.create_worktree") as mock_create, \
          patch("harness.run.worktree.remove_worktree") as mock_remove, \
          patch("harness.run.env_setup.create_venv"), \
          patch("harness.run.env_setup.install_requirements"), \
@@ -80,4 +86,6 @@ def test_execute_task_repeat_removes_worktree_even_if_scoring_fails(tmp_path):
         except RuntimeError:
             pass
 
-    assert mock_remove.called
+    # Capture work_dir to verify cleanup targets the correct directory
+    work_dir = mock_create.call_args.args[1]
+    mock_remove.assert_called_once_with(work_dir.parent)
