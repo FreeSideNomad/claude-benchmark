@@ -1,0 +1,4 @@
+id: easy-03-fix-plugin-wiring
+title: Fix cross-module shout() behavior
+difficulty: easy
+category: multi-file-reasoning
